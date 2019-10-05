@@ -22,4 +22,5 @@ urlpatterns = [
     path('login/', login),
     path('index/', index),
     path('logout/', logout),
+    path('slc/', send_login_code),
 ]
