@@ -1,6 +1,7 @@
 from django.shortcuts import render,HttpResponseRedirect
 from Seller.models import *
 from django.http import JsonResponse
+from django.core.paginator import Paginator
 # Create your views here.
 
 
@@ -158,3 +159,62 @@ def send_login_code(request):
         result["code"] = 400
         result["data"] = "请求错误"
     return JsonResponse(result)
+
+
+def goods_add(request):
+    goods_type_list = Goods_type.objects.all()
+    if request.method == "POST":
+        data = request.POST
+        tupi = request.FILES
+        print(data)
+
+        goods = Goods()
+        goods.goods_num = data.get('goods_num')
+        goods.goods_name = data.get('goods_name')
+        goods.goods_price = data.get('goods_price')
+        goods.goods_count = data.get('goods_count')
+        goods.goods_location = data.get('goods_location')
+        goods.goods_safedate = data.get('goods_safedate')
+        goods.goods_pro_time = data.get('goods_pro_time')   #时间格式为    yyyy-mm-dd
+        goods.goods_status = 1
+
+        #保存外键类型
+        goods_type_id = int(data.get('goods_type'))
+        goods.goods_type = Goods_type.objects.get(id = goods_type_id)
+
+        #保存图片
+        picture = tupi.get("picture")
+        goods.picture = picture
+
+        #  保存对应的卖家
+        user_id = request.COOKIES.get("id")
+        goods.good_store = Login_user.objects.get(id = int(user_id))
+
+        goods.save()
+    return render(request,"seller/goods_add.html",locals())
+
+######商品分页操作
+def goods_list(request,status,page=1):  #传入操作（0or1）    页码page默认值为1
+    page = int(page)
+    if status == "1":
+        goodses = Goods.objects.filter(goods_status=1)  #显示status为1 的商品
+    elif status == "0":
+        goodses = Goods.objects.filter(goods_status=0)    #显示status为0 的商品
+    else :
+        goodses = Goods.objects.all()     #显示所有的商品
+    allgoods = Paginator(goodses,10)        #分页显示商品  10行个一页
+    goods_list = allgoods.page(page)
+    return render(request,"seller/goods_list.html",locals())
+
+####商品上下架
+def goods_status(request,state,id):
+    id = int(id)    #
+    goods = Goods.objects.get(id=id)
+    if state == "up":     #上架
+        goods.goods_status = 1
+    elif state =="down":    #下架
+        goods.goods_status = 0
+    goods.save()    #保存
+    url =request.META.get("HTTP_REFERER","/Seller/goods_list/1/1")   #获取当前请求页面的url  否则返回（，）逗号后面的路由
+    return HttpResponseRedirect(url)
+

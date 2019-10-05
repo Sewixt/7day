@@ -1,0 +1,56 @@
+{% extends 'seller/base.html' %}
+
+{% block title %}
+    商品列表页
+{% endblock %}
+
+{% block label %}
+    在售商品
+    <a href="/Seller/goods_add/" class="btn btn-warning" style="float: right">添加商品</a>
+{% endblock %}
+
+{% block content %}
+    <table class="table table-bordered dataTable">
+        <thead>
+            <tr>
+                <th class="sorting_asc">商品编号</th>
+                <th class="sorting_asc">商品名称</th>
+                <th class="sorting_asc">商品价格</th>
+                <th class="sorting_asc">商品数量</th>
+                <th class="sorting_asc">商品产地</th>
+                <th class="sorting_asc">商品保质期</th>
+                <th class="sorting_asc">操作</th>
+            </tr>
+            </thead>
+        <tbody>
+            {% for goods in goods_list %}
+                <tr>
+                <td>{{ goods.goods_num }}</td>
+                <td>{{ goods.goods_name }}</td>
+                <td>{{ goods.goods_price }}.$</td>
+                <td>{{ goods.goods_count }}</td>
+                <td>{{ goods.goods_location }}</td>
+                <td>{{ goods.goods_safedate }}/月</td>
+                <td>
+                    <a href="/Seller/goods_status/down/{{ goods.id }}/" class="btn btn-warning">下架</a>
+                    <a href="/Seller/goods_status/up/{{ goods.id }}/" class="btn btn-success">上架</a>
+                </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot></tfoot>
+    </table>
+
+    <ul class="pagination" style="float:right;margin-right: 90px">
+        {% for p in allgoods.page_range %}
+            <li class="paginate_button page-item previous">
+            {% ifequal status "1" %}
+                <a href="/Seller/goods_list/{{ p }}/1/" class="page-link">{{ p }}</a>
+            {% else %}
+                <a href="/Seller/goods_list/{{ p }}/0/" class="page-link">{{ p }}</a>
+            {% endifequal %}
+            </li>
+        {% endfor %}
+
+    </ul>
+{% endblock %}

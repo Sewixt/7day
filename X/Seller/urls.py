@@ -23,4 +23,8 @@ urlpatterns = [
     path('index/', index),
     path('logout/', logout),
     path('slc/', send_login_code),
+    path('goods_add/', goods_add),
+    path('goods_list/', goods_list),
+    re_path(r'goods_list/(?P<page>\d+)/(?P<status>[0,1])/', goods_list),
+    re_path(r'goods_status/(?P<state>\w+)/(?P<id>\d+)/', goods_status),
 ]
