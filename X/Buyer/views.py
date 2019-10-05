@@ -1,5 +1,5 @@
 from django.shortcuts import render,HttpResponseRedirect
-from Seller.models import *
+from django.http import JsonResponse
 from Buyer.models import *
 from alipay import AliPay
 # Create your views here.
@@ -197,3 +197,76 @@ def payresult(request):
         order = PayOrder.objects.get(order_number=out_trade_on)
         order.orderinfo_set.all().update(order_status=1)
     return render(request,"buyer/payresult.html",locals())
+
+
+@loginValid
+def add_cart(request):
+    result = {
+        "code":200,
+        "data":""
+    }
+    if request.method == "POST":
+        id = int(request.POST.get("goods_id"))
+        count = int(request.POST.get("count",1))
+        goods = Goods.objects.get(id = id)   #获取商品信息
+        cart = Cart()
+        cart.goods_name = goods.goods_name
+        cart.goods_number = count
+        cart.goods_price = goods.goods_price
+        cart.goods_picture = goods.picture
+        cart.goods_total = goods.goods_price * count
+        cart.goods_id = id
+        cart.cart_user = request.COOKIES.get("id")
+        cart.save()
+        result["data"] = "加入购物车成功"
+    else:
+        result["code"] = 500
+        result["data"] = "请求方式错误"
+    return JsonResponse(result)
+
+#购物车 cart
+def cart(request):
+    #返回当前用户购物车中的商品以-id
+    user_id = request.COOKIES.get("id")
+    goods = Cart.objects.filter(cart_user=int(user_id)).order_by("-id")
+    count = goods.count()
+    return render(request,"buyer/cart.html",locals())
+
+@loginValid
+def pay_order_more(request):
+    data = request.GET
+    data_item = data.items()
+    request_data = [ ]
+    for key,value in data_item:
+        if key.startswith("check_"):
+            goods_id = key.split("_",1)[1]
+            count = data.get("count_"+goods_id)
+            request_data.append((int(goods_id),int(count)))
+    if request_data:
+        #保存订单表，但是保存总价
+        order = PayOrder()
+        order.order_number = str(time.time()).replace(".", "")
+        order.order_date = datetime.datetime.now()
+        order.order_user = Login_user.objects.get(id=int(request.COOKIES.get("id"))) #订单对应的买家
+        order.save()
+        # 保存订单详情
+        # 查询商品的信息
+        """订单的编号,商品的id,商品的图片,商品的名称,商品购买的数量,
+        商品的单价,商品小计,店铺id"""
+        order_total = 0
+        for goods_id,count in request_data:
+            goods = Goods.objects.get(id=int(goods_id))
+            order_info = OrderInfo()
+            order_info.order_id = order
+            order_info.goods_id = goods_id
+            order_info.goods_picture = goods.picture
+            order_info.goods_name = goods.goods_name
+            order_info.goods_count = int(count)
+            order_info.goods_price = goods.goods_price
+            order_info.goods_total_price = goods.goods_price * int(count)
+            order_info.store_id = goods.goods_store  # 商品卖家，goods,goods_store本身就是一条卖家数据
+            order_info.save()
+            order_total += order_info.goods_total_price #  总价计算
+        order.order_total = order_total
+        order.save()
+    return render(request, "buyer/pay_order.html", locals())

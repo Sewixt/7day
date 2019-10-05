@@ -14,4 +14,7 @@ urlpatterns = [
     path('pay_order/', pay_order),
     path('alipay/', AlipayViews),
     path('payresult/', payresult),
+    path('add_cart/', add_cart),
+    path('cart/', cart),
+    path('pay_order_more/', pay_order_more),
 ]
