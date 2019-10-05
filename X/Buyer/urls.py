@@ -11,4 +11,7 @@ urlpatterns = [
     path('logout/', logout),
     path('goods_list/', goods_list),
     re_path('detail/(?P<id>\d+)', detail),
+    path('pay_order/', pay_order),
+    path('alipay/', AlipayViews),
+    path('payresult/', payresult),
 ]
