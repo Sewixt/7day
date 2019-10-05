@@ -1,5 +1,6 @@
 from django.shortcuts import render,HttpResponseRedirect
 from Seller.models import *
+from Buyer.models import *
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 # Create your views here.
@@ -218,3 +219,21 @@ def goods_status(request,state,id):
     url =request.META.get("HTTP_REFERER","/Seller/goods_list/1/1")   #获取当前请求页面的url  否则返回（，）逗号后面的路由
     return HttpResponseRedirect(url)
 
+
+def change_order(request):
+    #通过订单详情id来锁定订单详情
+    order_id = request.GET.get("order_id")
+    #获取需要修改的状态
+    order_status = request.GET.get("order_status")
+    order = OrderInfo.objects.get(id = order_id)
+    order.order_status = int(order_status)
+    order.save()
+    return JsonResponse({"data":"修改成功"})
+
+
+def order_list(request,status):
+    status = int(status)
+    user_id = request.COOKIES.get("id")  #获取店铺id
+    store = Login_user.objects.get(id=user_id)  #获取店铺信息
+    store_order = store.orderinfo_set.filter(order_status = status).order_by("-id")     #获取店铺对应的订单
+    return render(request, "seller/order_list.html", locals())
